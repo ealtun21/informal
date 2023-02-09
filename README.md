@@ -11,11 +11,13 @@ Add the following dependency to your `Cargo.toml`.
 informal = "0.3"
 ```
 
+Or run the command.
+
+```
+cargo add informal
+```
+
 ## Usage
-
-Rust type inference is used to know what to return.
-
-## Examples
 
 Rust type inference is used to know what to return.
 
