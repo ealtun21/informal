@@ -5,21 +5,38 @@
 //! Rust type inference is used to know what to return.
 //!
 //! ```no_run
-//! let username: String = casual::prompt("Please enter your name: ").get();
+//! let username: String = informal::prompt("Please enter your name: ").get();
 //! ```
 //!
 //! [`FromStr`] is used to parse the input, so you can read any type that
 //! implements [`FromStr`].
 //!
 //! ```no_run
-//! let age: u32 = casual::prompt("Please enter your age: ").get();
+//! let age: u32 = informal::prompt("Please enter your age: ").get();
 //! ```
 //!
 //! [`.matches()`] can be used to validate the input data.
 //!
 //! ```no_run
-//! let age: u32 = casual::prompt("Please enter your age again: ")
+//! let age: u32 = informal::prompt("Please enter your age again: ")
 //!     .matches(|x| *x < 120)
+//!     .get();
+//! ```
+//!
+//! [`.type_error_message()`] can be used to specify an error message when the string fails to be converted into the wanted type.
+//!
+//! ```no_run
+//! let age: u32 = informal::prompt("Please enter your age: ")
+//!     .type_error_message("Error: What kind of age is that?!")
+//!     .get();
+//! ```
+//! 
+//! [`.validator_error_message()`] can be used to specify an error message when your matches condition does not hold.
+//!
+//! ```no_run
+//! let age: u32 = informal::prompt("Please enter your age: ")
+//!     .matches(|x| *x < 120)
+//!     .validator_error_message("Error: You can't be that old.... can you?")
 //!     .get();
 //! ```
 //!
@@ -27,7 +44,18 @@
 //! answer.
 //!
 //! ```no_run
-//! if casual::confirm("Are you sure you want to continue?") {
+//! if informal::confirm("Are you sure you want to continue?") {
+//!     // continue
+//! } else {
+//!     panic!("Aborted!");
+//! }
+//! ```
+//! 
+//! //! A convenience function [`confirm_with_message`] is provided for getting a yes or no
+//! answer with an error message.
+//!
+//! ```no_run
+//! if informal::confirm_with_message("Are you sure you want to continue?", "Please answer with 'yes' or 'no'") {
 //!     // continue
 //! } else {
 //!     panic!("Aborted!");
@@ -58,6 +86,8 @@ pub struct Input<T> {
     suffix: Option<String>,
     default: Option<T>,
     validator: Option<Validator<T>>,
+    type_message: Option<String>,
+    validator_message: Option<String>,
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -86,8 +116,7 @@ impl<T: Debug> Debug for Input<T> {
             .field("prompt", &self.prompt)
             .field("suffix", &self.suffix)
             .field("default", &self.default)
-            .finish() // FIXME rust-lang/rust#67364:
-                      // use .finish_non_exhaustive() when it's stabilized
+            .finish_non_exhaustive()
     }
 }
 
@@ -111,6 +140,8 @@ impl<T> Input<T> {
             suffix: None,
             default: None,
             validator: None,
+            type_message: Some(String::from("Error: invalid input")),
+            validator_message: Some(String::from("Error: does not pass validation")),
         }
     }
 
@@ -132,6 +163,18 @@ impl<T> Input<T> {
         self
     }
 
+    /// Set the error message that is printed when the type convertion fails.
+    pub fn type_error_message<S: Into<String>>(mut self, message: S) -> Self {
+        self.type_message = Some(message.into());
+        self
+    }
+
+    /// Set the error message that is printed when the validator condition is not met.
+    pub fn validator_error_message<S: Into<String>>(mut self, message: S) -> Self {
+        self.validator_message = Some(message.into());
+        self
+    }
+
     /// Set the default value.
     ///
     /// If set, this will be returned in the event the user enters an empty
@@ -149,7 +192,7 @@ impl<T> Input<T> {
     /// # Examples
     ///
     /// ```no_run
-    /// # use casual::Input;
+    /// # use informal::Input;
     /// let num: u32 = Input::new().matches(|x| *x != 10).get();
     /// ```
     pub fn matches<F>(mut self, matches: F) -> Self
@@ -187,6 +230,8 @@ where
             suffix,
             default,
             validator,
+            type_message: error_message,
+            validator_message,
         } = self;
 
         let prompt = prompt.map(move |prompt| {
@@ -214,14 +259,22 @@ where
                     Ok(result) => {
                         if let Some(validator) = &validator {
                             if !validator.run(&result) {
-                                println!("Error: invalid input");
+                                println!(
+                                    "{}",
+                                    validator_message.as_ref().unwrap_or(&"".to_string())
+                                );
                                 continue;
                             }
                         }
                         break result;
                     }
                     Err(err) => {
-                        println!("Error: {}", err);
+                        println!(
+                            "{}",
+                            error_message
+                                .as_ref()
+                                .unwrap_or(&format!("Error: {}", err).to_string())
+                        );
                         continue;
                     }
                 },
@@ -239,7 +292,7 @@ where
     /// This function uses [`FromStr`] to parse the input data.
     ///
     /// ```no_run
-    /// # use casual::Input;
+    /// # use informal::Input;
     /// let num: u32 = Input::new().prompt("Enter a number: ").get();
     /// ```
     ///
@@ -254,7 +307,7 @@ where
     /// then fed to the given closure.
     ///
     /// ```no_run
-    /// # use casual::Input;
+    /// # use informal::Input;
     /// let value = Input::new().map(|s: String| &s.to_lowercase() == "yes");
     /// ```
     ///
@@ -278,7 +331,7 @@ where
 /// Read in something without any prompt.
 ///
 /// ```no_run
-/// # use casual::input;
+/// # use informal::input;
 /// let data: String = input().get();
 /// ```
 pub fn input<T>() -> Input<T> {
@@ -292,14 +345,14 @@ pub fn input<T>() -> Input<T> {
 /// Read in a simple string:
 ///
 /// ```no_run
-/// # use casual::prompt;
+/// # use informal::prompt;
 /// let username: String = prompt("Please enter your name: ").get();
 /// ```
 ///
 /// Types that implement [`FromStr`] will be automatically parsed.
 ///
 /// ```no_run
-/// # use casual::prompt;
+/// # use informal::prompt;
 /// let years = prompt("How many years have you been coding Rust: ")
 ///     .default(0)
 ///     .get();
@@ -318,7 +371,7 @@ where
 /// # Examples
 ///
 /// ```no_run
-/// # use casual::confirm;
+/// # use informal::confirm;
 /// if confirm("Are you sure you want to continue?") {
 ///     // continue
 /// } else {
@@ -329,6 +382,27 @@ pub fn confirm<S: Into<String>>(text: S) -> bool {
     prompt(text)
         .suffix(" [y/N] ")
         .default("n".to_string())
+        .matches(|s| matches!(&*s.trim().to_lowercase(), "n" | "no" | "y" | "yes"))
+        .map(|s| matches!(&*s.to_lowercase(), "y" | "yes"))
+}
+
+/// Prompts the user for confirmation (yes/no) with an error message.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use informal::confirm;
+/// if confirm("Are you sure you want to continue?") {
+///     // continue
+/// } else {
+///     panic!("Aborted!");
+/// }
+/// ```
+pub fn confirm_with_message<S: Into<String>>(text: S, error_meesage: S) -> bool {
+    prompt(text)
+        .suffix(" [y/N] ")
+        .default("n".to_string())
+        .validator_error_message(error_meesage)
         .matches(|s| matches!(&*s.trim().to_lowercase(), "n" | "no" | "y" | "yes"))
         .map(|s| matches!(&*s.to_lowercase(), "y" | "yes"))
 }

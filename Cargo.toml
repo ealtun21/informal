@@ -1,12 +1,12 @@
 [package]
-name = "casual"
-version = "0.2.0"
-authors = ["Ross MacArthur <ross@macarthur.io>"]
-edition = "2018"
+name = "informal"
+version = "0.3.0"
+authors = ["Ross MacArthur <ross@macarthur.io>", "Eray Altun <ealtun21@ku.edu.tr"]
+edition = "2021"
 description = "Simple crate for parsing user input."
 readme = "README.md"
-homepage = "https://github.com/rossmacarthur/casual"
-repository = "https://github.com/rossmacarthur/casual"
+homepage = "https://github.com/ealtun21/informal"
+repository = "https://github.com/ealtun21/informal"
 license = "MIT OR Apache-2.0"
 keywords = ["simple", "cli", "console", "text", "input"]
 categories =  ["command-line-interface", "rust-patterns"]
