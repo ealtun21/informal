@@ -25,14 +25,14 @@ Rust type inference is used to know what to return.
 let username: String = informal::prompt("Please enter your name: ").get();
 ```
 
-[`FromStr`] is used to parse the input, so you can read any type that
-implements [`FromStr`].
+`FromStr` is used to parse the input, so you can read any type that
+implements `FromStr`.
 
 ```rust
 let age: u32 = informal::prompt("Please enter your age: ").get();
 ```
 
-[`.matches()`] can be used to validate the input data.
+`.matches()` can be used to validate the input data.
 
 ```rust
 let age: u32 = informal::prompt("Please enter your age again: ")
@@ -40,7 +40,7 @@ let age: u32 = informal::prompt("Please enter your age again: ")
     .get();
 ```
 
-[`.type_error_message()`] can be used to specify an error message when the string fails to be converted into the wanted type.
+`.type_error_message()` can be used to specify an error message when the string fails to be converted into the wanted type.
 
 ```rust
 let age: u32 = informal::prompt("Please enter your age: ")
@@ -48,7 +48,7 @@ let age: u32 = informal::prompt("Please enter your age: ")
     .get();
 ```
 
-[`.validator_error_message()`] can be used to specify an error message when your matches condition does not hold.
+`.validator_error_message()` can be used to specify an error message when your matches condition does not hold.
 
 ```rust
 let age: u32 = informal::prompt("Please enter your age: ")
@@ -57,7 +57,7 @@ let age: u32 = informal::prompt("Please enter your age: ")
     .get();
 ```
 
-A convenience function [`confirm`] is provided for getting a yes or no
+A convenience function `confirm` is provided for getting a yes or no
 answer.
 
 ```rust
@@ -68,7 +68,7 @@ if informal::confirm("Are you sure you want to continue?") {
 }
 ```
 
- A convenience function [`confirm_with_message`] is provided for getting a yes or no
+ A convenience function `confirm_with_message` is provided for getting a yes or no
 answer with an error message.
 
 ```rust
